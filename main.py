@@ -441,3 +441,6 @@ def main():
 # If this is run as file, not as an imported module. Start the program by running main()
 if __name__ == "__main__":
     main()
+
+
+# COPYRIGHT - Oliver Midbrink 2020
