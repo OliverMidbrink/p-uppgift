@@ -2,4 +2,4 @@
 
 #### Projekt "187 Aktieköp" valdes
 
-Copyright - Oliver Midbrink 2020
+Copyright 2020 Jonas Oliver Theodor Midbrink

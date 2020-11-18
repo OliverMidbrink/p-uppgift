@@ -443,4 +443,4 @@ if __name__ == "__main__":
     main()
 
 
-# COPYRIGHT - Oliver Midbrink 2020
+# Copyright 2020 Jonas Oliver Theodor Midbrink
