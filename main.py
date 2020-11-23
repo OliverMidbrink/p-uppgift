@@ -3,9 +3,11 @@ import tkinter as tk
 from tkinter import ttk
 from tkscrolledframe import ScrolledFrame
 from tkinter.ttk import *
+import time
 
 # For reading data about stocks such as balance sheet and historical prices
 import yfinance as yf
+from yahoofinancials import YahooFinancials
 
 # Mostly for web-scraping used in the StockSelector search_stock method
 import requests
@@ -122,22 +124,26 @@ class StockSelector(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         # Descriptive label for search bar
-        search_label = tk.Label(self, text="Search Stock: ")
+        search_label = tk.Label(self, text="Search stock by company name or symbol: ")
         search_label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
 
-        # Searchfield for stock keyword
+        # Search function for searching up stocks. Used both in search button and entry
+        def search_function(*args):
+            self.display_search_results(self.search_stock(search_bar.get()))
+
+        # Search field for stock keyword
         search_bar = tk.Entry(self)
         search_bar.grid(row=0, column=1, padx=10, pady=10)
+
         # Save search_bar as attribute
         self.search_bar = search_bar
+
+        # Bind search_bar enter to searching stocks
+        search_bar.bind("<Return>", search_function)
 
         # Search button that when pressed, feeds the
         # string from search_bar to search_stock method as well as
         # should_hide_when_selected.
-        # search function written here for clarity
-        def search_function():
-            self.display_search_results(self.search_stock(search_bar.get()))
-
         search_button = tk.Button(self, text="Search", command=search_function)
         search_button.grid(row=0, column=2, padx=10, pady=10, sticky='w')
 
@@ -200,18 +206,19 @@ class StockSelector(tk.Frame):
 
             # Function that runs this stock_selectors function_to_run with
             # the selected stock.
-            def assigned_func(stock_data):
+            def select_stock(stock_data):
+                # hide StockSelector frame
+                # if should_hide_when_selected is true
+                if self.should_hide_when_selected is True:
+                    print('removing stockresults frame')
+                    self.sf_stock_results.grid_forget()
+
                 # Run function, for example analysis or return stock name
                 self.function_to_run(stock_data)
 
-                # After running function_to_run, hide StockSelector frame
-                # if should_hide_when_selected is true
-                if self.should_hide_when_selected is True:
-                    self.sf_stock_results.grid_forget()
-
             # Create the select_stock_button and bind the custom made func to it
             select_button = tk.Button(inner_frame, text='Select stock',
-                                      command=lambda stock_data=stock_results[row_idx]: assigned_func(stock_data))
+                                      command=lambda stock_data=stock_results[row_idx]: select_stock(stock_data))
 
             # Position the select_button with grid
             select_button.grid(row=row_idx * 2 + 2, column=0, padx=5, pady=10, sticky='w')
@@ -226,7 +233,6 @@ class StockSelector(tk.Frame):
                 # Place the info_label at the correct place. row_idx + 1 because
                 # the first row is just column info. Second row is the first stock
                 info_label.grid(row=row_idx * 2 + 2, column=col_idx + 1, padx=5, pady=10, sticky='w')
-
 
     def search_stock(self, keywords):
         # Search for the stocks and create a list with search results
@@ -266,8 +272,8 @@ class StockSelector(tk.Frame):
             # Get all the html columns of this result
             columns = result.find_all('td')
 
-            # Get the symbol name of result
-            result_info['symbol'] = columns[0].find('a').get_text()
+            # Get the symbol name of result, strip() to remove leading and trailing spaces
+            result_info['symbol'] = columns[0].find('a').get_text().strip()
 
             # Get the name of result
             result_info['name'] = columns[1].get_text()
@@ -323,14 +329,103 @@ class FundamentalAnalysisPage(tk.Frame):
         stock_selector.grid(row=1, column=1, sticky="nsew")
 
     def fundamental_analysis(self, stock_data):
-        # Run fundamental analysis
-        pass
-    
-    def present_fundamental_analysis(self, stock_data):
-        fundamental_values = self.fundamental_analysis(stock_data['symbol'])
-        print('Ran fundamental analysis with: ', stock_data['symbol'])
-        #present values
 
+        # Run fundamental analysis
+
+        # Get a Ticker object that can retrieve information about a stock
+        stock_ticker = yf.Ticker(stock_data['symbol'])
+
+        # Get the general information about stock
+        general_stock_info = stock_ticker.info
+
+        # Get stock balance sheet
+        yahoo_financials = YahooFinancials(stock_data['symbol'])
+        raw_balance_sheet = yahoo_financials.get_financial_stmts('annual', 'balance')
+
+        # Calculate solidity
+        print('balance_sheet ', raw_balance_sheet)
+
+        # Get the balance_sheet for latest fiscal year
+        balanceSheetHistory_for_stock = raw_balance_sheet['balanceSheetHistory'][stock_data['symbol']][0]
+        balance_sheet_latest_year_for_this_stock = balanceSheetHistory_for_stock[list(balanceSheetHistory_for_stock.keys())[0]]
+
+        total_shareholder_equity = balance_sheet_latest_year_for_this_stock['totalStockholderEquity']
+        total_assets = balance_sheet_latest_year_for_this_stock['totalAssets']
+
+        # Equity ratio ~ soliditet
+        equity_ratio = total_shareholder_equity / total_assets
+        print('Equity ratio: ', equity_ratio)
+
+        # Calulate p/e
+
+        # Get income statement to read earnings value
+        raw_income_statement = yahoo_financials.get_financial_stmts('annual', 'income')['incomeStatementHistory'][stock_data['symbol']][0]
+        income_statement_latest_year_for_this_stock = raw_income_statement[list(raw_income_statement.keys())[0]]
+        print('raw_income_statement', raw_income_statement)
+
+
+        # Get net income for the latest fiscal year
+        net_income = income_statement_latest_year_for_this_stock['netIncome']
+        print('Net income: ', net_income)
+        print('Shareholder Equity: ', total_shareholder_equity)
+
+
+        # Calculate price per earnings by dividing total shareholder equity by net income
+        price_per_earnings = total_shareholder_equity / net_income
+        print('Price per earnings: ', price_per_earnings)
+
+        # Calculate price per revenue by dividing total shareholder equity with total_revenue
+        total_revenue = income_statement_latest_year_for_this_stock['totalRevenue']
+        price_per_revenue = total_shareholder_equity / total_revenue
+
+        print(price_per_revenue)
+
+        return (equity_ratio, price_per_earnings, price_per_revenue)
+
+    def present_fundamental_analysis(self, stock_data):
+
+        # Using self.* in order to prevent duplicates when analysis is run multiple times
+
+        # The method fundamental_analysis takes some time, so show a loading screen while we wait
+        self.loading_label = tk.Label(self, text='Loading data...')
+        self.loading_label.grid(row=2, column=1, padx=10, pady=10)
+
+        # Try running the fundamental analysis, also except if there are errors
+        try:
+            # Run the fundamental_analysis method to retrieve fundamental key performance indicators
+            equity_ratio, price_per_earnings, price_per_revenue = self.fundamental_analysis(stock_data)
+
+            print('Ran fundamental analysis with:', stock_data['symbol'])
+
+            # Present the values
+            # Label showing what company has been analyzed
+            self.company_label = tk.Label(self, text="Fundamental Analysis for:  "+stock_data['name'], font=('Times', 16, 'bold'))
+            self. company_label.grid(row=2, column=1, padx=10, pady=10, sticky='w')
+
+            # Label for equity ratio round to 3 decimals
+            self.equity_ratio_label = tk.Label(self, text="Equity ratio (Soliditet): " + str(round(equity_ratio, 3)))
+            self.equity_ratio_label.grid(row=3, column=1, padx=10, pady=10, sticky='w')
+
+            # Label for price per earnings round to 3 decimals
+            self.price_per_earnings_label = tk.Label(self, text="Price per earnings (P/E): " + str(round(price_per_earnings, 3)))
+            self.price_per_earnings_label.grid(row=4, column=1, padx=10, pady=10, sticky='w')
+
+            # Label for price per revenue round to 3 decimals
+            self.price_per_revenue_label = tk.Label(self, text="Price per revenue (P/S): " + str(round(price_per_revenue, 3)))
+            self.price_per_revenue_label.grid(row=5, column=1, padx=10, pady=10, sticky='w')
+        except Exception as e:
+            # If something goes wrong in the fundamental_analysis tell the user that an error occured
+
+            # Error label
+            self.error_label = tk.Label(self, text="Something went wrong with the fundamental analysis", font=('Times', 16, 'bold'))
+            self.error_label.grid(row=2, column=1, padx=10, pady=10, sticky='w')
+
+            # Describe what went wrong
+            self.error_description_label = tk.Label(self, text="Error description: " + e)
+            self.error_description_label.grid(row=3, column=1, padx=10, pady=10, sticky='w')
+
+        # Finally remove the loading label once the values have been retrieved and calculated
+        self.loading_label.grid_forget()
 
 
 class TechnicalAnalysisPage(tk.Frame):
@@ -412,8 +507,6 @@ class BetaRankingPage(tk.Frame):
 
         # Position selected_stocks_label
         selected_stocks_label.grid(row=1, column=1, padx=10, pady=10, sticky='n')
-
-        # Add separators to clarify
 
     def add_stock_to_ranking_list(self, stock_data):
         # Add stock only if not already added to comparison list
