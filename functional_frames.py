@@ -11,15 +11,34 @@ from bs4 import BeautifulSoup
 # For data purposes
 import pandas
 
-# Results frame to show specific data, for example fundamental analysis data or technical analysis data or
+# List frame to show specific data, for example fundamental analysis data or technical analysis data or
 # even beta ranking list
-class Table(tk.Frame):
+class ListFrame(tk.Frame):
 
-    # Initialize results frame with data in the form of an array
-    def __init__(self, parent, data_frame):
+    # Initialize list frame with data in the form of an array
+    def __init__(self, parent, title, data_list, font=('Times', 16, 'normal')):
         tk.Frame.__init__(self, parent)
 
-        # Create results frame using the data variable
+        # Create a title for the list frame
+        self.title_label = tk.Label(self, text=title,
+                                    font=('Times', 16, 'bold'))
+        self.title_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')
+
+        # Create an array to store all the data rows or items
+        self.data_rows = []
+
+        # Create all the data labels (rows) by iterating throught the data_list
+        for str_data_idx in range(len(data_list)):
+            # Create a separator between for easier reading
+            Separator(self, orient='horizontal').grid(row=str_data_idx * 2 + 1,
+                                                      column=0,
+                                                      sticky='ew',
+                                                      columnspan=7
+                                                      )
+
+            # Create, configure and position the label. str_data_idx + 1 because the title is at row 0
+            self.data_rows.append(tk.Label(self, text=str(data_list[str_data_idx]), font=font)
+                                  .grid(row=str_data_idx * 2 + 2, column=0, padx=10, pady=10, sticky='w'))
 
 
 # Navigation frame with title in right top corner and back to main menu button in top left corner
