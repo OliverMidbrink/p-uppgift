@@ -1,6 +1,6 @@
 # Import GUI items
 import tkinter as tk
-from functional_frames import StockSelectorFrame, NavigationFrame
+from functional_frames import StockSelectorFrame, NavigationFrame, ListFrame
 
 # For reading data about stocks such as balance sheet and historical prices
 import yfinance as yf
@@ -19,60 +19,74 @@ import numpy as np
 # Beta_value_as_defined_in_the_assignment (instead of traditional betavalue)
 # lowest_price during these 30 days
 # highest_price during last 30 days
+# currency of stock
 def technical_analysis(stock_data):
-    # Run technical analysis
+    # Added try catch to catch errors
+    try:
+        # Run technical analysis
 
-    # Retrieve a data frame containing the stock price for the latest 30 days
-    stock_prices_latest_30_days = yf.download(stock_data['Symbol'], period='1mo')
-    print('Dataframe: ', stock_prices_latest_30_days)
-    print('Close: ', stock_prices_latest_30_days['Close'])
-    print('Open: ', stock_prices_latest_30_days['Open'])
+        # Retrieve a data frame containing the stock price for the latest 30 days
+        stock_prices_latest_30_days = yf.download(stock_data['Symbol'], period='1mo')
+        print('Dataframe: ', stock_prices_latest_30_days)
+        print('Close: ', stock_prices_latest_30_days['Close'])
+        print('Open: ', stock_prices_latest_30_days['Open'])
 
-    # Get the opening price from 30 days ago using pandas dataframe indexing
-    stock_price_30_days_ago = stock_prices_latest_30_days['Open'][0]
-    print('Price 30 days ago: ', stock_price_30_days_ago)
+        # Get the opening price from 30 days ago using pandas dataframe indexing
+        stock_price_30_days_ago = stock_prices_latest_30_days['Open'][0]
+        print('Price 30 days ago: ', stock_price_30_days_ago)
 
-    # Get the latest price
-    stock_price_latest_close = stock_prices_latest_30_days['Close'][-1]
-    print('Latest closing price: ', stock_price_latest_close)
+        # Get the latest price
+        stock_price_latest_close = stock_prices_latest_30_days['Close'][-1]
+        print('Latest closing price: ', stock_price_latest_close)
 
-    # Calculate price development during 30 latest days
-    price_development_percentage = (stock_price_latest_close / stock_price_30_days_ago - 1) * 100
-    print('Price development %: ', price_development_percentage)
+        # Calculate price development during 30 latest days
+        price_development_percentage = (stock_price_latest_close / stock_price_30_days_ago - 1) * 100
+        print('Price development %: ', price_development_percentage)
 
-    # Calculate highest price during latest 30 days
-    highest_price = np.amax(stock_prices_latest_30_days['High'])
-    print('Highest_price latest 30 days: ', highest_price)
+        # Calculate highest price during latest 30 days
+        highest_price = np.amax(stock_prices_latest_30_days['High'])
+        print('Highest_price latest 30 days: ', highest_price)
 
-    # Calculate lowest price during latest 30 days
-    lowest_price = np.amin(stock_prices_latest_30_days['Low'])
-    print('Lowest_price latest 30 days: ', lowest_price)
+        # Calculate lowest price during latest 30 days
+        lowest_price = np.amin(stock_prices_latest_30_days['Low'])
+        print('Lowest_price latest 30 days: ', lowest_price)
 
-    # Calculate "betavärde" for a this stock. "betavärde" is
-    # Get a Ticker object that can retrieve information about a market index
-    dow_jones_ticker = yf.Ticker('^DJI')
-    dow_jones_data = dow_jones_ticker.history()
+        # Calculate "betavärde" for a this stock. "betavärde" is
+        # Get a Ticker object that can retrieve information about a market index
+        dow_jones_ticker = yf.Ticker('^DJI')
+        dow_jones_data = dow_jones_ticker.history()
 
-    print(dow_jones_data)
+        print(dow_jones_data)
 
-    # Dow jones price 30 days ago
-    dow_jones_price_30_days_ago = dow_jones_data['Open'][0]
+        # Dow jones price 30 days ago
+        dow_jones_price_30_days_ago = dow_jones_data['Open'][0]
 
-    # Dow jones price around now
-    dow_jones_price_latest_close = dow_jones_data['Close'][-1]
+        # Dow jones price around now
+        dow_jones_price_latest_close = dow_jones_data['Close'][-1]
 
-    # "beta value" for this is calculated as:
-    # (stock_price_now / old_stock_price) / (index_price_now / old_index_price)
-    # Where the old price represents the price approximately 30 days ago depending
-    # when the market open days are
-    QUOTE_beta_value_UNQUOTE_for_stock = (stock_price_latest_close / stock_price_30_days_ago) / (
-                dow_jones_price_latest_close / dow_jones_price_30_days_ago)
+        # "beta value" for this is calculated as:
+        # (stock_price_now / old_stock_price) / (index_price_now / old_index_price)
+        # Where the old price represents the price approximately 30 days ago depending
+        # when the market open days are
+        QUOTE_beta_value_UNQUOTE_for_stock = (stock_price_latest_close / stock_price_30_days_ago) / (
+                    dow_jones_price_latest_close / dow_jones_price_30_days_ago)
 
-    print('"Beta value": ', QUOTE_beta_value_UNQUOTE_for_stock)
+        print('"Beta value": ', QUOTE_beta_value_UNQUOTE_for_stock)
 
-    # Return the values calculated above in function. Order will be as defined in comment above function
-    return (price_development_percentage, QUOTE_beta_value_UNQUOTE_for_stock, lowest_price, highest_price)
+        # Get currency for stock
+        stock_ticker = yf.Ticker(stock_data['Symbol'])
 
+        # Get stock currency
+        currency = stock_ticker.info['currency']
+        print('Currency: ', currency)
+
+
+        # Return the values calculated above in function. Order will be as defined in comment above function
+        return (price_development_percentage, QUOTE_beta_value_UNQUOTE_for_stock, lowest_price, highest_price, currency)
+    except Exception as e:
+        print('Error: ', e)
+
+    return None
 
 """ CLASSES """
 
@@ -195,7 +209,7 @@ class FundamentalAnalysisPage(tk.Frame):
 
         # The method fundamental_analysis takes some time, so show a loading screen while we wait
         self.loading_label = tk.Label(self, text='Loading data...')
-        self.loading_label.grid(row=2, column=1, padx=10, pady=10)
+        self.loading_label.grid(row=2, column=0, padx=10, pady=10)
 
         # Try running the fundamental analysis, also except if there are errors
         try:
@@ -206,30 +220,33 @@ class FundamentalAnalysisPage(tk.Frame):
 
             # Present the values
             # Label showing what company has been analyzed
-            self.company_label = tk.Label(self, text="Fundamental Analysis for:  "+stock_data['Name'], font=('Times', 16, 'bold'))
-            self. company_label.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
-            # Label for equity ratio round to 3 decimals
-            self.equity_ratio_label = tk.Label(self, text="Equity ratio (Soliditet): " + str(round(equity_ratio, 3)))
-            self.equity_ratio_label.grid(row=3, column=1, padx=10, pady=10, sticky='w')
+            # Title for the list_frame_class
+            list_frame_title = "Fundamental Analysis for:  " + stock_data['Name']
 
-            # Label for price per earnings round to 3 decimals
-            self.price_per_earnings_label = tk.Label(self, text="Price per earnings (P/E): " + str(round(price_per_earnings, 3)))
-            self.price_per_earnings_label.grid(row=4, column=1, padx=10, pady=10, sticky='w')
+            # Data containing strings for the list_frame_class. All rounded to 3 decimals
+            list_frame_data = [
+                "Yahoo Finance Symbol is:\t" + stock_data['Symbol'],
+                "Equity ratio (Soliditet):\t" + str(round(equity_ratio * 100, 3)) + "%",
+                "Price per earnings (P/E):\t" + str(round(price_per_earnings, 3)),
+                "Price per revenue (P/S):\t" + str(round(price_per_revenue, 3))
+            ]
 
-            # Label for price per revenue round to 3 decimals
-            self.price_per_revenue_label = tk.Label(self, text="Price per revenue (P/S): " + str(round(price_per_revenue, 3)))
-            self.price_per_revenue_label.grid(row=5, column=1, padx=10, pady=10, sticky='w')
+            # Create a listFrame to show all the data in a convenient manner
+            self.list_frame = ListFrame(self, list_frame_title, list_frame_data)
+            self.list_frame.grid(row=2, column=0, padx=10, pady=10, sticky='nsew')
+
+
         except Exception as e:
             # If something goes wrong in the fundamental_analysis tell the user that an error occured
 
             # Error label
             self.error_label = tk.Label(self, text="Something went wrong with the fundamental analysis", font=('Times', 16, 'bold'))
-            self.error_label.grid(row=2, column=1, padx=10, pady=10, sticky='w')
+            self.error_label.grid(row=2, column=0, padx=10, pady=10, sticky='w')
 
             # Describe what went wrong
             self.error_description_label = tk.Label(self, text="Error description: " + str(e))
-            self.error_description_label.grid(row=3, column=1, padx=10, pady=10, sticky='w')
+            self.error_description_label.grid(row=3, column=0, padx=10, pady=10, sticky='w')
 
         # Finally remove the loading label once the values have been retrieved and calculated
         self.loading_label.grid_forget()
@@ -256,14 +273,45 @@ class TechnicalAnalysisPage(tk.Frame):
         stock_selector = StockSelectorFrame(self, self.present_technical_analysis, controller, True)
 
         # Position the StockSelector frame
-        stock_selector.grid(row=1, column=1, sticky="nsew")
+        stock_selector.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
 
     def present_technical_analysis(self, stock_data):
-        price_development, QUOTE_betavalue_UNQUOTE, lowest_price, highest_price = technical_analysis(stock_data)
-        print('Ran technical analysis with: ', stock_data['Symbol'])
+        # Get technical_values
+        technical_values = technical_analysis(stock_data)
 
-        # Present values
+        # If there was no error unpack the technical values and continue
+        if technical_values is not None:
+            price_development, QUOTE_betavalue_UNQUOTE, lowest_price, highest_price, currency = technical_values
+            print('Ran technical analysis with: ', stock_data['Symbol'])
+
+            # Present values with a list frame
+
+            # Create list frame title
+            list_frame_title = "Technical Analysis with: \t" + stock_data['Name']
+
+            # Create list frame data
+            list_frame_data = [
+                "Yahoo Finance Symbol is:\t\t\t\t\t\t" + stock_data['Symbol'],
+                "Price development of stock during last 30 days:\t\t\t\t" + str(round(price_development, 3)) + '%',
+                "Betavalue as defined in assignment last 30 days, compared to DOW JONES: \t" + str(round(QUOTE_betavalue_UNQUOTE, 3)),
+                "Lowest stock price during last 30 days:\t\t\t\t\t" + currency + ' ' + str(round(lowest_price, 3)),
+                "Highest stock price during last 30 days:\t\t\t\t\t" + currency + ' ' + str(round(highest_price, 3))
+            ]
+
+
+            # Create a listFrame to show all the data in a convenient manner
+            self.list_frame = ListFrame(self, list_frame_title, list_frame_data)
+            self.list_frame.grid(row=2, column=0, padx=10, pady=10, sticky='nsew')
+        else:
+            # There was an error with the technical_analysis. Could be lots of reasons
+
+            # Tell the user there was an error
+            error_label = tk.Label(self,
+                                   text="An error occured when running the technical analysis for stock with symbol: " +
+                                   stock_data['Symbol'])
+            # position the error label
+            error_label.grid(row=2, column=0, padx=10, pady=10, sticky='nsew')
 
 
 
@@ -275,16 +323,16 @@ class BetaRankingPage(tk.Frame):
         # Initialize parent class
         tk.Frame.__init__(self, parent)
 
-        # List to keep track of which stocks should be compared
-        self.stocks_to_compare = []
-
         """" Navigation """
 
         navigation_frame = NavigationFrame(self, page_title="Stocks ranked by beta value",
                                            navigation_command=lambda: controller.display_frame(MenuPage))
-        navigation_frame.grid(row=0, column=0, columnspan=4, sticky="ew")
+        navigation_frame.grid(row=0, column=0, columnspan=1, sticky="ew")
 
         """ Content """
+
+        # Create a selected stocks frame from scratch
+        self.start_or_restart_selected_stocks_frame()
 
         # Create a stock selector window to let user select a stock and run the specified function with it
         stock_selector = StockSelectorFrame(self, self.add_stock_to_ranking_list, controller, False)
@@ -292,28 +340,108 @@ class BetaRankingPage(tk.Frame):
         # Position the StockSelector frame
         stock_selector.grid(row=1, column=0, sticky="nsew")
 
-        # Contain all beta rank presentation within a frame
-        beta_rank_frame = tk.Frame(self)
-        beta_rank_frame.grid(row=1, column=1, sticky="nsew")
-        # Save as attribute
-        self.beta_rank_frame = beta_rank_frame
+        # Create a frame to house compare and reset buttons
+        button_frame = tk.Frame(self)
+        # Compare stocks button
+        compare_stock_button = tk.Button(button_frame, text="Compare stocks", command=self.compare_stocks)
 
-        # Label to show which stocks are selected underneath
-        selected_stocks_label = tk.Label(beta_rank_frame, text='Selected Stocks', font=('times', 15, 'bold'))
+        # Position compare button
+        compare_stock_button.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
-        # Position selected_stocks_label
-        selected_stocks_label.grid(row=1, column=1, padx=10, pady=10, sticky='n')
+        # Reset button
+        reset_button = tk.Button(button_frame, text="Restart Comparison", command=self.start_or_restart_selected_stocks_frame)
+
+        # Position reset button
+        reset_button.grid(row=0, column=1, padx=10, pady=10, sticky='e')
+
+        # position button frame
+        button_frame.grid(row=0, column=1, sticky='nswe')
+
+    def start_or_restart_selected_stocks_frame(self):
+        # List to keep track of which stock symbols should be compared
+        self.stock_symbols_to_compare = []
+
+        # List to keep track of stock names or identifiers
+        self.stock_identifiers = []
+
+        # Contain all beta rank presentation within a list frame
+        self.stocks_to_compare_frame = self.create_stocks_to_compare_frame()
+
+    def create_stocks_to_compare_frame(self):
+        return ListFrame(self, 'Selected stocks', self.stock_identifiers, font=('Courier', 12, 'normal')).grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
     def add_stock_to_ranking_list(self, stock_data):
         # Add stock only if not already added to comparison list
-        if stock_data['Symbol'] not in self.stocks_to_compare:
+        if stock_data['Symbol'] not in self.stock_symbols_to_compare:
             print('Added ', stock_data['Symbol'], ' to beta list.')
-            self.stocks_to_compare.append(stock_data['Symbol'])
+            self.stock_symbols_to_compare.append(stock_data['Symbol'])
 
-            # Add list item of the current selected stock to the total list of selected stocks
-            row_text = stock_data['Symbol'] + ' - ' + stock_data['Name']
-            stock_label = tk.Label(self.beta_rank_frame, text=row_text)
-
-            stock_label.grid(row=1 + len(self.stocks_to_compare), column=1, padx=10, pady=10, sticky='w')
+            # Add a description to stock_identifiers list about this stock
+            row_text = 'Symbol: ' + stock_data['Symbol'] + ' - Name: ' + stock_data['Name']
+            self.stock_identifiers.append(row_text)
         else:
             print('Symbol ', stock_data['Symbol'], ' already added to beta list.')
+
+        print(self.stock_symbols_to_compare)
+        print(self.stock_identifiers)
+
+        # Update selected stocks frame
+        self.stocks_to_compare_frame = self.create_stocks_to_compare_frame()
+
+    def compare_stocks(self):
+        print('Comparing stocks: ', self.stock_symbols_to_compare)
+
+        # List containing "betavalue" and symbol
+        beta_and_symbol_list = []
+
+        # Generate list with stock symbol and "betavalue" as elements
+        for stock_idx in range(len(self.stock_symbols_to_compare)):
+            # Create the proper data structure for the technical_analysis function
+            stock_data = {'Symbol': self.stock_symbols_to_compare[stock_idx]}
+
+            # Run the technical_analysis function and apply the return values to tuple technical_values
+            technical_values = technical_analysis(stock_data)
+
+            # Set the "betavalue" in case there was an error with technical_analysis()
+            QUOTE_betavalue_UNQOUTE = 0
+
+            stock_description = 'Error for this stock: ' + self.stock_identifiers[stock_idx]
+
+            # Set values only if there was no error
+            if technical_values is not None:
+                # "betavalue" will be the second return value
+                QUOTE_betavalue_UNQOUTE = technical_values[1]
+
+                # set stock description value
+                stock_description = self.stock_identifiers[stock_idx]
+
+
+
+            # Add three values to the beta_and_symbol list. Stock symbol, "betavalue" and stock description (identifier)
+            beta_and_symbol_list.append((self.stock_symbols_to_compare[stock_idx],
+                                         QUOTE_betavalue_UNQOUTE,
+                                         stock_description))
+
+        beta_and_symbol_list.sort(key=lambda x: x[1], reverse=True)
+        print('Sorted beta list: ', beta_and_symbol_list)
+
+        # Create a list for the list frame
+        beta_info_list = []
+
+        # Iterate through the sorted beta_and_symbol_list in order to prepara a data list for a list frame
+        stock_rank_according_to_beta = 1
+        for stock_info in beta_and_symbol_list:
+            # Append all the stocks to the final list frame data list that will be displayed to user
+            # First present rank then present beta then present stock information
+            beta_info_list.append(str(stock_rank_according_to_beta) + '. ' + 'Beta: ' +
+                                  str(round(stock_info[1], 3)) + ' - ' + stock_info[2])
+
+            # Add to the rank through each iteration so that the ranks are increasing
+            stock_rank_according_to_beta += 1
+
+        # Create a listframe to display all the beta ranking data
+        self.stocks_to_compare_frame = ListFrame(self, 'Ranking according to "betavalue"', beta_info_list,
+                                                 font=('Courier', 10, 'normal')).grid(
+            row=1, column=1, padx=10, pady=10, sticky="nsew"
+        )
+
