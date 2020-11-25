@@ -2,4 +2,6 @@
 
 #### Projekt "187 Aktieköp" valdes
 
+##### Programming project as part of the education in Industrial Engineering and Managment program at KTH Royal Institute of Technology
+
 Copyright 2020 Jonas Oliver Theodor Midbrink
