@@ -1,7 +1,5 @@
-# Projektuppgift för programmeringskurs DD1315 prgi HT2020 i Python på KTH
+# Programming Project Assignment at KTH Royal Institute of Technology
 
-#### Projekt "187 Aktieköp" valdes
+Project 187 Stockpurchase chosen as part of the programming course DD1315 prgi HT2020 in Python at KTH, Industrial Engineering and Managment program
 
-##### Programming project as part of the education in Industrial Engineering and Managment program at KTH Royal Institute of Technology
-
-Copyright 2020 Jonas Oliver Theodor Midbrink
+Copyright 2020 Oliver Midbrink
