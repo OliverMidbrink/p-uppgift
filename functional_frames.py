@@ -13,9 +13,13 @@ import pandas
 
 # List frame to show specific data, for example fundamental analysis data or technical analysis data or
 # even beta ranking list
+# The frame will contain a title in bold text
+# then a column of values after as specified in the data_list argument
+# it is also possible to select a custom font for the data_list. If you have lots of values you can reduce the font size
 class ListFrame(tk.Frame):
 
     # Initialize list frame with data in the form of an array
+    # Arguments are explained in comment above, parent is parent frame.
     def __init__(self, parent, title, data_list, font=('Times', 16, 'normal')):
         tk.Frame.__init__(self, parent)
 
@@ -42,10 +46,11 @@ class ListFrame(tk.Frame):
 
 
 # Navigation frame with title in right top corner and back to main menu button in top left corner
+# back to main_menu button is binded using navigation_command argument.
 class NavigationFrame(tk.Frame):
 
-    # Initalize navigation frame with page title and navigation command as input. Also parent which is where
-    # the navigation frame is located
+    # Initalize navigation frame with page title and navigation command as inputted arguments. Also parent which is
+    # where the navigation frame is located
     def __init__(self, parent, page_title, navigation_command):
         tk.Frame.__init__(self, parent)
 
@@ -59,7 +64,8 @@ class NavigationFrame(tk.Frame):
         title.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
 
-# StockSelector is a frame that lets the user choose a stock from internet search
+# StockSelector is a frame that lets the user choose a stock from internet search based on webscraping from yahoo
+# finance
 class StockSelectorFrame(tk.Frame):
 
     # Initialize StockSelector
@@ -102,6 +108,10 @@ class StockSelectorFrame(tk.Frame):
         search_button = tk.Button(self, text="Search", command=search_function)
         search_button.grid(row=0, column=2, padx=10, pady=10, sticky='w')
 
+    # Function that inputs financia_item_info and prints all the values out to terminal
+    # This function needs slight modification to be compatible with latest version of program
+    # arguments: financial_item_info, a dictionary with values and keys
+    # returns nothing
     def log_financial_item_info(self, financial_item_info):
         # Output information of financial item to terminal/console
         print('Result __________')
@@ -112,6 +122,10 @@ class StockSelectorFrame(tk.Frame):
         print('Type: ', financial_item_info['type'])
         print('Exchange: ', financial_item_info['exchange'])
 
+
+    # Searches a stock through webscrabing based on a keyword string argument
+    # Returns dataframe with the columns containing stock data and one row for each stock
+    # columns are symbol, name, latest price, industry/category then type then exchange
     def search_stock(self, keywords):
         # Search for the stocks and create a list with search results
         print('Searched for: ', keywords)
@@ -186,7 +200,11 @@ class StockSelectorFrame(tk.Frame):
         print('Data frame: \n', search_results_data_frame)
         return search_results_data_frame
 
-    # Function that displays the search results from the user input in the form ao
+    # Function that displays the search results from search_stocks function that searches based on user keywords
+    # This function takes in the stock_results_dataframe as argument and displays a table containg the info and
+    # select stock buttons. These button run a certain specified command "function_to_run" with the input argument
+    # being the stock data as a row in the dataframe
+    # The function returns nothing.
     def display_search_results(self, stock_results_dataframe):
         # stock_results is a list containing dictionaries. Each dictionary represents a stock
         # . The stock dictionaries contain keywords 'symbol', 'name', 'last_price', 'industry_or_category'
@@ -211,9 +229,9 @@ class StockSelectorFrame(tk.Frame):
         # Set the column names if there are any search results
         if len(stock_results_dataframe) > 0:
             # set column names
-            col_names = stock_results_dataframe.columns
+            col_names = ['Select buttons'] + list(stock_results_dataframe.columns)
             # Iterate through column names
-            for col_idx in range(len(stock_results_dataframe.columns)):
+            for col_idx in range(len(col_names)):
                 col_label = tk.Label(inner_frame, text=col_names[col_idx], font=('Arial', 15, 'bold'))
                 col_label.grid(row=0, column=col_idx, sticky='w')
         # Otherwise tell user there were no results
@@ -236,7 +254,7 @@ class StockSelectorFrame(tk.Frame):
             # Create select stock button for each row
 
             # Function that runs this stock_selectors function_to_run with
-            # the selected stock.
+            # the selected stock. Data passed to function to run is row from the dataframe
             def select_stock(symbol):
                 # hide StockSelector frame
                 # if should_hide_when_selected is true
@@ -265,3 +283,6 @@ class StockSelectorFrame(tk.Frame):
                 # Place the info_label at the correct place. row_idx + 1 because
                 # the first row is just column info. Second row is the first stock
                 info_label.grid(row=row_idx * 2 + 2, column=col_idx + 1, padx=5, pady=10, sticky='w')
+
+
+# Copyright 2020 Oliver Midbrink
